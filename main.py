@@ -31,16 +31,9 @@ class Game(object):
 
         try:
 
-            # if self.alien_time == 0:
-            ivec = self.alien.buildInput()
-            ovec = self.alien.compute(ivec)[0]
-
-            text.draw_string(self.surface, "IVEC %s" % '\t'.join(['%.2lf'%i for i in ivec[0]]),
+            regions = self.world.player.regions()
+            text.draw_string(self.surface, "REGIONS %s" % '\t'.join(['%d'%i for i in regions]),
                              util.WHITE, 10, [10, 60])
-            text.draw_string(self.surface, "OVEC %s" % '\t'.join(['%.2lf'%i for i in ovec]),
-                             util.WHITE, 10, [10, 80])
-            text.draw_string(self.surface, "VEL  %s" % '\t'.join(['%.2lf'%i for i in self.alien.velocity]),
-                             util.WHITE, 10, [10, 100])
         except:
             pass
 
@@ -186,11 +179,11 @@ class Game(object):
 
                 self.world.add_player()
 
-                self.alien = aliennn.AlienNN(self.world)
-                # for i in range(self.level * 2):
-                #     asteroid.Asteroid(self.world,
-                #                       random.randint(75, 100),
-                #                       0.5 + self.level / 4.0)
+                # self.alien = aliennn.AlienNN(self.world)
+                for i in range(self.level * 2):
+                    asteroid.Asteroid(self.world,
+                                      random.randint(75, 100),
+                                      0.5 + self.level / 4.0)
 
                 # for i in range(self.level*1):
                 #     self.alien = aliennn.AlienNN(self.world)

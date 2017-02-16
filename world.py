@@ -12,7 +12,7 @@ import particle
 import text
 import alien
 import aliennn
-import ship
+import shipnn
 import asteroid
 
 class World(object):
@@ -74,9 +74,13 @@ class World(object):
     def add(self, sprite):
         self.sprites.append(sprite)
 
+    def liveSprites(self,filter=[]):
+        return [x for x in self.sprites if not x.kill and not type(x) in filter]
+
     def add_player(self):
         if not self.player:
-            self.player = ship.Ship(self)
+            #self.player = ship.Ship(self)
+            self.player = shipnn.ShipNN(self)
 
     def add_text(self, string, scale = 10):
         text.Character.string(self, string,
