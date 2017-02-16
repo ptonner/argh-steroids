@@ -11,6 +11,7 @@ import sprite
 import particle
 import text
 import alien
+import aliennn
 import ship
 import asteroid
 
@@ -67,7 +68,7 @@ class World(object):
         self.player = None
 
     def remove_asteroids(self):
-        self.sprites = [x for x in self.sprites 
+        self.sprites = [x for x in self.sprites
                         if not isinstance(x, asteroid.Asteroid)]
 
     def add(self, sprite):
@@ -78,14 +79,14 @@ class World(object):
             self.player = ship.Ship(self)
 
     def add_text(self, string, scale = 10):
-        text.Character.string(self, string, 
+        text.Character.string(self, string,
                               [self.width / 2, self.text_y], scale)
         self.text_y += scale * 5
 
     def update(self):
-        for event in pygame.event.get(): 
-            if event.type == pygame.QUIT: 
-                self.quit = True 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.quit = True
 
             if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
                 if event.key == pygame.K_ESCAPE:
@@ -127,9 +128,9 @@ class World(object):
         self.rotate_by = x / 5.0
 
         if self.rotate_left:
-            self.rotate_by = -3
+            self.rotate_by = -6
         elif self.rotate_right:
-            self.rotate_by = 3
+            self.rotate_by = 6
 
         if self.player:
             self.player.thrust(self.thrust)
@@ -145,8 +146,10 @@ class World(object):
 
         self.alien_time -= 1
         if self.alien_time < 0:
-            self.alien_time = random.randint(1000, 2000)
-            alien.Alien(self)
+            self.alien_time = 10
+            # self.alien_time = random.randint(1000, 2000)
+            #alien.Alien(self)
+            #aliennn.AlienNN(self)
 
         if self.player and self.player.kill:
             self.player = None
@@ -180,7 +183,7 @@ class World(object):
             y = int(i.position[1] / map_spacing) % map_height
             i.test_collisions(world_map[x][y])
 
-            # now we've tested i against everything it could possibly touch, 
+            # now we've tested i against everything it could possibly touch,
             # we no longer need to test anything against i
             i.tested_collision = True
 

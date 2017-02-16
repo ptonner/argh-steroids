@@ -9,6 +9,7 @@ from pygame import mixer
 
 import util
 import asteroid
+import aliennn
 import text
 import world
 import ship
@@ -23,19 +24,35 @@ class Game(object):
         self.level = 1
 
     def draw_hud(self):
-        text.draw_string(self.surface, "SCORE %d" % self.world.score, 
+        text.draw_string(self.surface, "SCORE %d" % self.world.score,
                          util.WHITE, 10, [10, 20])
-        text.draw_string(self.surface, "LEVEL %d" % self.level, 
+        text.draw_string(self.surface, "LEVEL %d" % self.level,
                          util.WHITE, 10, [10, 40])
+
+        try:
+
+            # if self.alien_time == 0:
+            ivec = self.alien.buildInput()
+            ovec = self.alien.compute(ivec)[0]
+
+            text.draw_string(self.surface, "IVEC %s" % '\t'.join(['%.2lf'%i for i in ivec[0]]),
+                             util.WHITE, 10, [10, 60])
+            text.draw_string(self.surface, "OVEC %s" % '\t'.join(['%.2lf'%i for i in ovec]),
+                             util.WHITE, 10, [10, 80])
+            text.draw_string(self.surface, "VEL  %s" % '\t'.join(['%.2lf'%i for i in self.alien.velocity]),
+                             util.WHITE, 10, [10, 100])
+        except:
+            pass
+
 
     def start_screen(self):
         self.world.add_text('ARGH ITS THE ASTEROIDS', scale = 20)
-        self.world.add_text('PRESS ESC TO QUIT') 
-        self.world.add_text('PRESS LEFT AND RIGHT TO ROTATE') 
+        self.world.add_text('PRESS ESC TO QUIT')
+        self.world.add_text('PRESS LEFT AND RIGHT TO ROTATE')
         self.world.add_text('PRESS UP FOR THRUST')
         self.world.add_text('PRESS SPACE FOR FIRE')
         self.world.add_text('PRESS M TO TURN MUSIC ON OR OFF')
-        self.world.add_text('OR USE MOUSE CONTROLS') 
+        self.world.add_text('OR USE MOUSE CONTROLS')
         self.world.add_text('WATCH OUT FOR ALLEN THE ALIEN')
         self.world.add_text('PRESS ENTER TO START', scale = 20)
 
@@ -48,25 +65,25 @@ class Game(object):
             self.surface.fill(util.BLACK)
             self.draw_info()
             self.world.draw()
-            # set the limit very high, we can use the start screen as a 
+            # set the limit very high, we can use the start screen as a
             # benchmark
             self.clock.tick(200)
             pygame.display.flip()
 
     def draw_info(self):
         if self.world.info:
-            text.draw_string(self.surface, 
+            text.draw_string(self.surface,
                              "FPS %d" % self.clock.get_fps(),
                              util.WHITE, 10, [10, self.height - 20])
-            text.draw_string(self.surface, 
-                             "OBJECTS %d" % self.world.n_objects(), 
+            text.draw_string(self.surface,
+                             "OBJECTS %d" % self.world.n_objects(),
                              util.WHITE, 10, [10, self.height - 40])
-            text.draw_string(self.surface, 
+            text.draw_string(self.surface,
                              "PARTICLES %d" % self.world.particle.n_particles(),
                              util.WHITE, 10, [10, self.height - 60])
 
     def level_start(self):
-        start_animation_frames = 100
+        start_animation_frames = 0#100
         start_animation_time = start_animation_frames
 
         while not self.world.quit:
@@ -75,8 +92,8 @@ class Game(object):
 
             self.world.update()
             if self.world.spawn:
-                asteroid.Asteroid(self.world, 
-                                  random.randint(75, 100), 
+                asteroid.Asteroid(self.world,
+                                  random.randint(75, 100),
                                   self.level)
 
             self.surface.fill(util.BLACK)
@@ -85,19 +102,19 @@ class Game(object):
             self.draw_info()
             start_animation_time -= 1
             t = float(start_animation_time) / start_animation_frames
-            text.draw_string(self.surface, "LEVEL START", util.WHITE,
-                             t * 150,
-                             [self.width / 2, self.height / 2],
-                             centre = True, 
-                             angle = t * 200.0)
+            # text.draw_string(self.surface, "LEVEL START", util.WHITE,
+            #                  t * 150,
+            #                  [self.width / 2, self.height / 2],
+            #                  centre = True,
+            #                  angle = t * 200.0)
             self.world.draw()
             self.clock.tick(60)
             pygame.display.flip()
 
     def play_level(self):
         while not self.world.quit:
-            if self.world.n_asteroids == 0:
-                break
+            # if self.world.n_asteroids == 0:
+            #     break
             if not self.world.player:
                 break
             if self.world.next_level:
@@ -144,7 +161,7 @@ class Game(object):
             self.world.update()
 
             self.surface.fill(util.BLACK)
-            text.draw_string(self.surface, "PRESS ENTER TO PLAY AGAIN", 
+            text.draw_string(self.surface, "PRESS ENTER TO PLAY AGAIN",
                              util.WHITE,
                              20,
                              [self.width / 2, self.height / 2],
@@ -168,10 +185,15 @@ class Game(object):
                 self.level_start()
 
                 self.world.add_player()
-                for i in range(self.level * 2):
-                    asteroid.Asteroid(self.world, 
-                                      random.randint(75, 100), 
-                                      0.5 + self.level / 4.0)
+
+                self.alien = aliennn.AlienNN(self.world)
+                # for i in range(self.level * 2):
+                #     asteroid.Asteroid(self.world,
+                #                       random.randint(75, 100),
+                #                       0.5 + self.level / 4.0)
+
+                # for i in range(self.level*1):
+                #     self.alien = aliennn.AlienNN(self.world)
 
                 self.play_level()
 
@@ -188,13 +210,13 @@ def main():
     mixer.init()
 
     # audio channel allocation:
-    # 
+    #
     #   0 - background music
     #   1 - ship engines
     #   2 - ship guns
     #   3 - alien
     #   4 to 7 - explosions
-    # 
+    #
     # we reserve the first four channels for us to allocate and let mixer pick
     # channels for explosions automatically
     mixer.set_reserved(4)

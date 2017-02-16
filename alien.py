@@ -20,19 +20,20 @@ class Alien(sprite.Sprite):
                        [0.5, -0.4], [-0.5, -0.4],
                        [-0.7, 0]]
         self.direction = random.randint(1, 2) * 2 - 3
-        self.position = [world.width / 2 - self.direction * world.width / 2, 
+        self.position = [world.width / 2 - self.direction * world.width / 2,
                          random.randint(0, world.height)]
         self.angle = 0
-        self.scale = 10
+        self.scale = 20
         self.direction_timer = random.randint(10, 50)
         self.random_velocity()
+        # self.velocity = [0,0]
 
         self.alien_sound = mixer.Sound(os.path.join("sounds", "alien_engine.ogg"))
         self.alien_channel = pygame.mixer.Channel(3)
         self.alien_channel.play(self.alien_sound, loops = -1)
 
     def random_velocity(self):
-        self.velocity = [self.direction * (random.random() * 2 + 1), 
+        self.velocity = [self.direction * (random.random() * 2 + 1),
                          random.random() * 6 - 3]
 
     def update(self):
