@@ -14,9 +14,12 @@ import text
 import world
 import ship
 
+from database import Network, Base, Run
+
 class Game(object):
-    def __init__(self, surface):
+    def __init__(self, surface, session):
         self.surface = surface
+        self.session = session
         self.world = world.World(surface)
         self.width = self.world.width
         self.height = self.world.height
@@ -33,11 +36,14 @@ class Game(object):
             ivec = self.world.player.buildInput()
             ovec = self.world.player.compute(ivec)[0]
 
+            text.draw_string(self.surface, "NETWORK %d" % self.net.id,
+                             util.WHITE, 10, [10, 60])
+
             # print ovec
             text.draw_string(self.surface, "IVEC %s" % '\t'.join(['%.2lf'%i for i in ivec[0]]),
-                             util.WHITE, 10, [10, 60])
-            text.draw_string(self.surface, "OVEC %s" % '\t'.join(['%.2lf'%i for i in ovec]),
                              util.WHITE, 10, [10, 80])
+            text.draw_string(self.surface, "OVEC %s" % '\t'.join(['%.2lf'%i for i in ovec]),
+                             util.WHITE, 10, [10, 100])
 
             # y,x = self.world.player.positions()
             # s = "POSITIONS %s" % '\t'.join([', '.join(['%.0lf'%i for i in p]) for p in (x,y)])
@@ -191,10 +197,18 @@ class Game(object):
             self.world.reset()
             self.world.particle.starfield()
 
+            self.net =  Network()
+            self.run = Run(network=self.net)
+
+            self.session.add(self.net)
+            self.session.add(self.run)
+
+            self.session.commit()
+
             while not self.world.quit:
                 self.level_start()
 
-                self.world.add_player()
+                self.world.add_player(self.net)
 
                 # self.alien = aliennn.AlienNN(self.world)
                 for i in range(self.level * 2):
@@ -210,12 +224,54 @@ class Game(object):
                 if not self.world.player:
                     break
 
-                self.level += 1
+                if not self.world.quit:
+                    self.level += 1
+
+            self.run.levelsCompleted = self.level
+            self.run.score = self.world.score
+
+            self.session.add(self.run)
+            self.session.commit()
 
             self.game_over()
             self.epilogue()
 
 def main():
+
+    ########################################
+    # start database stuff
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    engine = create_engine('sqlite:///history.db')
+    # Bind the engine to the metadata of the Base class so that the
+    # declaratives can be accessed through a DBSession instance
+    Base.metadata.bind = engine
+
+    DBSession = sessionmaker(bind=engine)
+    # A DBSession() instance establishes all conversations with the database
+    # and represents a "staging zone" for all the objects loaded into the
+    # database session object. Any change made against the objects in the
+    # session won't be persisted into the database until you call
+    # session.commit(). If you're not happy about the changes, you can
+    # revert all of them back to the last commit by calling
+    # session.rollback()
+    session = DBSession()
+
+    # Insert a Person in the person table
+    # new_person = Person(name='new person')
+    # session.add(new_person)
+    # session.commit()
+
+    # Insert an Address in the address table
+    # new_address = Address(post_code='00000', person=new_person)
+    # session.add(new_address)
+    # session.commit()
+
+    # end database stuff
+    #########################################
+
     pygame.init()
     mixer.init()
 
@@ -236,7 +292,7 @@ def main():
     pygame.mouse.set_visible(False)
     pygame.display.set_caption("Argh, it's the Asteroids!!")
 
-    game = Game(surface)
+    game = Game(surface,session)
 
     game.play_game()
 

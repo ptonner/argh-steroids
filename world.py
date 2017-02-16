@@ -77,10 +77,10 @@ class World(object):
     def liveSprites(self,filter=[]):
         return [x for x in self.sprites if not x.kill and not type(x) in filter]
 
-    def add_player(self):
+    def add_player(self, net):
         if not self.player:
             #self.player = ship.Ship(self)
-            self.player = shipnn.ShipNN(self)
+            self.player = shipnn.ShipNN(self,net)
 
     def add_text(self, string, scale = 10):
         text.Character.string(self, string,

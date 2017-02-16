@@ -2,11 +2,11 @@ from ship import Ship
 from bullet import Bullet
 import numpy as np
 import neurolab as nl
-import random
+import random, os
 
 class ShipNN(Ship):
 
-    def __init__(self, world,):
+    def __init__(self, world, net):
         super(ShipNN, self).__init__(world)
         # Alien.__init__(self,world)
 
@@ -14,13 +14,17 @@ class ShipNN(Ship):
         # self.acceleration = [0,0]
 
         # self.net = nl.net.newff(weights)
-        self.net = nl.net.newff([[-10,10] for i in range(9)], [5,5, 4])
+        fname = '%d.csv'%net.id
+        if fname in os.listdir('.networks'):
+            self.net = nl.load(os.path.join('.networks', fname))
+        else:
+            self.net = nl.net.newff([[-10,10] for i in range(9)], [5,5, 4])
 
-        for l in self.net.layers:
-            l.initf = nl.init.InitRand([-1., 1.], 'wb')
+            for l in self.net.layers:
+                l.initf = nl.init.InitRand([-1., 1.], 'wb')
 
-        self.net.init()
-        # self.net.save('test.net')
+            self.net.init()
+            self.net.save(os.path.join('.networks',fname))
 
     def liveSprites(self):
         return self.world.liveSprites(filter=[ShipNN, Bullet])
