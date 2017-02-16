@@ -30,10 +30,13 @@ class Game(object):
                          util.WHITE, 10, [10, 40])
 
         try:
-
+            y,x = self.world.player.positions()
+            s = "POSITIONS %s" % '\t'.join([', '.join(['%.0lf'%i for i in p]) for p in (x,y)])
+            text.draw_string(self.surface, s,
+                             util.WHITE, 10, [10, 60])
             regions = self.world.player.regions()
             text.draw_string(self.surface, "REGIONS %s" % '\t'.join(['%d'%i for i in regions]),
-                             util.WHITE, 10, [10, 60])
+                             util.WHITE, 10, [10, 80])
         except:
             pass
 
@@ -180,7 +183,7 @@ class Game(object):
                 self.world.add_player()
 
                 # self.alien = aliennn.AlienNN(self.world)
-                for i in range(self.level * 2):
+                for i in range(self.level * 1):
                     asteroid.Asteroid(self.world,
                                       random.randint(75, 100),
                                       0.5 + self.level / 4.0)

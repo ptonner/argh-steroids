@@ -42,9 +42,21 @@ class ShipNN(Ship):
 
         return self.net.sim(v)
 
+    def positions(self,ls=None):
+        if ls is None:
+            ls = self.world.liveSprites(filter=[ShipNN, Bullet])
+
+        y,x = [self.position[1]-s.position[1] for s in ls], [s.position[0]-self.position[0] for s in ls]
+
+        # renormalize for wrapping map
+        y = [z if abs(z)<self.world.height/2 else z-np.sign(z)*self.world.height for z in y ]
+        x = [z if abs(z)<self.world.width/2 else z-np.sign(z)*self.world.width for z in x ]
+
+        return y,x
+
     def angles(self,):
-        ls = self.world.liveSprites([ShipNN, Bullet])
-        return np.arctan2([self.position[1]-s.position[1] for s in ls], [s.position[0]-self.position[0] for s in ls]) * 180 / np.pi
+
+        return np.arctan2(*self.positions()) * 180 / np.pi
 
     def regions(self,):
         angles = self.angles()
@@ -55,18 +67,10 @@ class ShipNN(Ship):
 
     def update(self):
 
-        ls = self.world.liveSprites([ShipNN, Bullet])
+        regions = self.regions()
+        # print self.position
+        # print self.positions()
 
-        angles = np.arctan2([self.position[1]-s.position[1] for s in ls], [s.position[0]-self.position[0] for s in ls]) * 180 / np.pi
-        regions = np.where((angles > 0) & (angles < 90), 0,
-                    np.where(angles>90, 1,
-                        np.where((angles<0) & (angles > -90), 2, 3)))
-
-        # print np.arctan2([s.position[1]-self.position[1] for s in ls], [s.position[0]-self.position[0] for s in ls]) * 180 / np.pi
-        # print np.arctan2([self.position[1]-s.position[1] for s in ls], [self.position[0]-s.position[0] for s in ls]) * 180 / np.pi
-        # print np.arctan2([s.position[0]-self.position[0] for s in ls], [s.position[1]-self.position[1] for s in ls]) * 180 / np.pi
-
-        print regions
 
         # ivec = self.buildInput()
         # ovec = self.compute(ivec)[0]
