@@ -30,13 +30,27 @@ class Game(object):
                          util.WHITE, 10, [10, 40])
 
         try:
-            y,x = self.world.player.positions()
-            s = "POSITIONS %s" % '\t'.join([', '.join(['%.0lf'%i for i in p]) for p in (x,y)])
-            text.draw_string(self.surface, s,
+            ivec = self.world.player.buildInput()
+            ovec = self.world.player.compute(ivec)[0]
+
+            # print ovec
+            text.draw_string(self.surface, "IVEC %s" % '\t'.join(['%.2lf'%i for i in ivec[0]]),
                              util.WHITE, 10, [10, 60])
-            regions = self.world.player.regions()
-            text.draw_string(self.surface, "REGIONS %s" % '\t'.join(['%d'%i for i in regions]),
+            text.draw_string(self.surface, "OVEC %s" % '\t'.join(['%.2lf'%i for i in ovec]),
                              util.WHITE, 10, [10, 80])
+
+            # y,x = self.world.player.positions()
+            # s = "POSITIONS %s" % '\t'.join([', '.join(['%.0lf'%i for i in p]) for p in (x,y)])
+            # text.draw_string(self.surface, s,
+            #                  util.WHITE, 10, [10, 60])
+            # regions = self.world.player.regions()
+            # text.draw_string(self.surface, "REGIONS %s" % '\t'.join(['%d'%i for i in regions]),
+            #                  util.WHITE, 10, [10, 80])
+            # # text.draw_string(self.surface, "ANGLE %.2lf" % self.world.player.angle,
+            # #                  util.WHITE, 10, [10, 120])
+            # angles = self.world.player.angles(norm=True)
+            # text.draw_string(self.surface, "ANGLES %s" % '\t'.join(['%.2lf'%i for i in angles]),
+            #                  util.WHITE, 10, [10, 100])
         except:
             pass
 
@@ -109,8 +123,8 @@ class Game(object):
 
     def play_level(self):
         while not self.world.quit:
-            # if self.world.n_asteroids == 0:
-            #     break
+            if self.world.n_asteroids == 0:
+                break
             if not self.world.player:
                 break
             if self.world.next_level:
@@ -183,7 +197,7 @@ class Game(object):
                 self.world.add_player()
 
                 # self.alien = aliennn.AlienNN(self.world)
-                for i in range(self.level * 1):
+                for i in range(self.level * 2):
                     asteroid.Asteroid(self.world,
                                       random.randint(75, 100),
                                       0.5 + self.level / 4.0)

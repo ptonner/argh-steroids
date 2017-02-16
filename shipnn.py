@@ -14,7 +14,7 @@ class ShipNN(Ship):
         # self.acceleration = [0,0]
 
         # self.net = nl.net.newff(weights)
-        self.net = nl.net.newff([[-10,10] for i in range(2)], [5,5, 4])
+        self.net = nl.net.newff([[-10,10] for i in range(9)], [5,5, 4])
 
         for l in self.net.layers:
             l.initf = nl.init.InitRand([-1., 1.], 'wb')
@@ -22,11 +22,31 @@ class ShipNN(Ship):
         self.net.init()
         # self.net.save('test.net')
 
+    def liveSprites(self):
+        return self.world.liveSprites(filter=[ShipNN, Bullet])
+
     def buildInput(self):
 
-        y,x = self.positions()
+        ls = self.liveSprites()
+        sizes = np.array(map(lambda x: x.scale, ls))
 
-        return [y+x]
+        y,x = self.positions()
+        regions = self.regions()
+        angles = self.angles()
+        dist = self.distances()
+
+        regionCounts = [sum(regions==i) for i in range(4)]
+
+        select = dist == dist.min()
+        angle = angles[select]
+        size = sizes[select]
+        y = y[select]
+        x = x[select]
+
+        # count in regions
+        # distance to closest in region
+
+        return [[angle, dist.min(), size, x, y]+regionCounts]
 
     def compute(self,v):
 
@@ -39,17 +59,31 @@ class ShipNN(Ship):
         y,x = [self.position[1]-s.position[1] for s in ls], [s.position[0]-self.position[0] for s in ls]
 
         # renormalize for wrapping map
-        y = [z if abs(z)<self.world.height/2 else z-np.sign(z)*self.world.height for z in y ]
-        x = [z if abs(z)<self.world.width/2 else z-np.sign(z)*self.world.width for z in x ]
+        y = np.array([z if abs(z)<self.world.height/2 else z-np.sign(z)*self.world.height for z in y ])
+        x = np.array([z if abs(z)<self.world.width/2 else z-np.sign(z)*self.world.width for z in x ])
 
         return y,x
 
-    def angles(self,):
+    def distances(self,ls=None):
+        y,x = self.positions(ls)
 
-        return np.arctan2(*self.positions()) * 180 / np.pi
+        mag = np.sqrt(x**2 + y**2)
+
+        return mag
+
+    def angles(self,norm=True):
+
+        angles = np.arctan2(*self.positions()) * 180 / np.pi
+        if norm:
+            angles += self.angle
+            angles = angles%360
+            angles[angles>180] = angles[angles>180]-360
+        return angles
 
     def regions(self,):
         angles = self.angles()
+
+        angles = angles-180
 
         return np.where((angles > 0) & (angles < 90), 0,
                     np.where(angles>90, 1,
@@ -57,25 +91,21 @@ class ShipNN(Ship):
 
     def update(self):
 
-        regions = self.regions()
-        # print self.position
-        # print self.positions()
+        try:
 
+            ivec = self.buildInput()
+            ovec = self.compute(ivec)[0]
 
-        ivec = self.buildInput()
-        print np.array(ivec).shape, self.net.ci
-        ovec = self.compute(ivec)[0]
+            # raise Exception()
 
-        print ovec
+            self.rotate_by(ovec[0])
 
-        # print self.angle-ovec[0], self.velocity[0] - ovec[1], self.velocity[1] - ovec[2]
+            self.thrust(ovec[1]>0)
 
-        # self.rotate_by(int(ovec[0]*6))
-        self.rotate_by(ovec[0])
+            if ovec[2] > 0:
+                self.fire()
+        except Exception, e:
+            # print e
+            pass
 
-        self.thrust(ovec[1]>0)
-
-        if ovec[2] > 0:
-            self.fire()
-            
         super(ShipNN, self).update()
