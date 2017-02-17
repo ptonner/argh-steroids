@@ -169,7 +169,7 @@ class World(object):
 
         self.sprites = [x for x in self.sprites if not x.kill]
 
-        if self.score < -500:
+        if self.score < -50:
             self.player = None
 
         self.penalty_time -= 1

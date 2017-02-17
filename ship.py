@@ -91,7 +91,7 @@ class Ship(sprite.Sprite):
 
             self.reload_timer = 10
             self.world.score -= FIRE_PENALTY
-            # self.world.shots += 1
+            self.world.shots += 1
 
     def update(self):
         self.reload_timer = max(0, self.reload_timer - 1)
