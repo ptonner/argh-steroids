@@ -14,6 +14,7 @@ import asteroid
 # default shield behavior
 # 0 is old regenerating shield behavior, 1 is manual shields
 SHIELDMODE = 0
+FIRE_PENALTY = .1
 
 class Ship(sprite.Sprite):
     def __init__(self, world):
@@ -89,6 +90,8 @@ class Ship(sprite.Sprite):
             projectile.angle = self.angle
 
             self.reload_timer = 10
+            self.world.score -= FIRE_PENALTY
+            # self.world.shots += 1
 
     def update(self):
         self.reload_timer = max(0, self.reload_timer - 1)

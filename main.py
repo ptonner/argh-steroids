@@ -27,21 +27,21 @@ class Game(object):
         self.level = 1
 
     def draw_hud(self):
-        text.draw_string(self.surface, "SCORE %d" % self.world.score,
+        text.draw_string(self.surface, "SCORE %.2lf" % self.world.score,
                          util.WHITE, 10, [10, 20])
         text.draw_string(self.surface, "LEVEL %d" % self.level,
                          util.WHITE, 10, [10, 40])
 
         try:
-            ivec = self.world.player.buildInput()
-            ovec = self.world.player.compute(ivec)[0]
 
             text.draw_string(self.surface, "NETWORK %d" % self.net.id,
                              util.WHITE, 10, [10, 60])
 
-            # print ovec
-            text.draw_string(self.surface, "IVEC %s" % '\t'.join(['%.2lf'%i for i in ivec[0]]),
+            ivec = self.world.player.buildInput()
+            text.draw_string(self.surface, "IVEC %s" % '\t'.join(['%.0lf'%i for i in ivec[0]]),
                              util.WHITE, 10, [10, 80])
+
+            ovec = self.world.player.compute(ivec)[0]
             text.draw_string(self.surface, "OVEC %s" % '\t'.join(['%.2lf'%i for i in ovec]),
                              util.WHITE, 10, [10, 100])
 
@@ -142,7 +142,7 @@ class Game(object):
             self.draw_hud()
             self.draw_info()
             self.world.draw()
-            self.clock.tick(60)
+            # self.clock.tick(60)
             pygame.display.flip()
 
     def game_over(self):
@@ -226,15 +226,18 @@ class Game(object):
 
                 if not self.world.quit:
                     self.level += 1
+                    self.world.score += 500
 
             self.run.levelsCompleted = self.level
+            if self.world.shots > 0:
+                self.run.accuracy = 1.*self.world.bulletImpacts/self.world.shots
             self.run.score = self.world.score
 
             self.session.add(self.run)
             self.session.commit()
 
-            self.game_over()
-            self.epilogue()
+            # self.game_over()
+            # self.epilogue()
 
 def main():
 

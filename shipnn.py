@@ -18,13 +18,16 @@ class ShipNN(Ship):
         if fname in os.listdir('.networks'):
             self.net = nl.load(os.path.join('.networks', fname))
         else:
-            self.net = nl.net.newff([[-10,10] for i in range(9)], [5,5, 4])
+            self.net = nl.net.newff([[-10,10] for i in range(17)], [5,5, 4])
 
             for l in self.net.layers:
                 l.initf = nl.init.InitRand([-1., 1.], 'wb')
 
             self.net.init()
             self.net.save(os.path.join('.networks',fname))
+
+        self.memory = 0
+        self.numTrack = 3
 
     def liveSprites(self):
         return self.world.liveSprites(filter=[ShipNN, Bullet])
@@ -39,18 +42,36 @@ class ShipNN(Ship):
         angles = self.angles()
         dist = self.distances()
 
+        sort = np.argsort(dist)
+
         regionCounts = [sum(regions==i) for i in range(4)]
 
-        select = dist == dist.min()
-        angle = angles[select]
-        size = sizes[select]
-        y = y[select]
-        x = x[select]
+        # select = dist == dist.min()
+        # angle = angles[select]
+        # size = sizes[select]
+        # y = y[select]
+        # x = x[select]
 
         # count in regions
         # distance to closest in region
 
-        return [[angle, dist.min(), size, x, y]+regionCounts]
+        # return [[angle, dist.min(), size,]+regionCounts + [self.memory]]
+
+        angle = angles[sort[:self.numTrack]].tolist()
+        dist = dist[sort[:self.numTrack]].tolist()
+        size = sizes[sort[:self.numTrack]].tolist()
+
+        # boolean for each tracker
+        obs = [1]*min(sort.shape[0], self.numTrack)
+        if sort.shape[0] < self.numTrack:
+            obs = obs + [0] * (self.numTrack - sort.shape[0])
+            angle += [0]*(self.numTrack - sort.shape[0])
+            dist += [0]*(self.numTrack - sort.shape[0])
+            size += [0]*(self.numTrack - sort.shape[0])
+
+        # print [angle + dist + size +regionCounts + [self.memory]]
+
+        return [angle + dist + size + obs + regionCounts + [self.memory]]
 
     def compute(self,v):
 
@@ -87,7 +108,7 @@ class ShipNN(Ship):
     def regions(self,):
         angles = self.angles()
 
-        angles = angles-180
+        # angles = angles-180
 
         return np.where((angles > 0) & (angles < 90), 0,
                     np.where(angles>90, 1,
@@ -108,6 +129,8 @@ class ShipNN(Ship):
 
             if ovec[2] > 0:
                 self.fire()
+
+            self.memory = ovec[3]
         except Exception, e:
             # print e
             pass

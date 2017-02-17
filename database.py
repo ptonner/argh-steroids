@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -18,7 +18,8 @@ class Run(Base):
     # Notice that each column is also a normal Python instance attribute.
     id = Column(Integer, primary_key=True)
     levelsCompleted = Column(Integer)
-    score = Column(Integer)
+    score = Column(Float)
+    accuracy = Column(Float)
     network_id = Column(Integer, ForeignKey('network.id'))
     network = relationship(Network)
 

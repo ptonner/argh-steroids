@@ -15,6 +15,9 @@ import aliennn
 import shipnn
 import asteroid
 
+PENALTY_TIME = 100
+FIRE_PENALTY = 1
+
 class World(object):
     def __init__(self, surface):
         self.surface = surface
@@ -25,6 +28,8 @@ class World(object):
         self.score = 0
         self.n_asteroids = 0
         self.text_y = 100
+        self.bulletImpacts = 0
+        self.shots = 0
 
         # input state
         self.quit = False
@@ -44,6 +49,8 @@ class World(object):
 
         # countdown timer until next alien
         self.alien_time = random.randint(1000, 2000)
+
+        self.penalty_time = PENALTY_TIME
 
         self.music_playing = True
         self.background_music = mixer.Sound(os.path.join("sounds", "hoarse_space_cadet.ogg"))
@@ -93,6 +100,8 @@ class World(object):
                 self.quit = True
 
             if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
+                if event.key == pygame.K_k:
+                    self.player=None
                 if event.key == pygame.K_ESCAPE:
                     self.quit = event.type == pygame.KEYDOWN
                 elif event.key == pygame.K_LEFT:
@@ -159,6 +168,14 @@ class World(object):
             self.player = None
 
         self.sprites = [x for x in self.sprites if not x.kill]
+
+        if self.score < -500:
+            self.player = None
+
+        self.penalty_time -= 1
+        if self.penalty_time == 0:
+            self.score -= 1
+            self.penalty_time = PENALTY_TIME
 
         # split the world into a map of 100x100 squares, put a note in each
         # square of each sprite which intersects with that square ... then when
