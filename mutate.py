@@ -17,8 +17,8 @@ class Mutate(object):
 
             for i in range(l.np['w'].shape[0]):
                 for j in range(l.np['w'].shape[1]):
-                if random.random()>(1-self.mutationRate):
-                    l.np['w'][i,j] = 1-2*random.random()
+                    if random.random()>(1-self.mutationRate):
+                        l.np['w'][i,j] = 1-2*random.random()
 
     def mutant(self):
         return self.newnet

@@ -14,12 +14,15 @@ import aliennn
 import text
 import world
 import ship
+import shipnn
 
+import numpy as np
 from database import Network, Base, Run
+from mutate import Mutate
 
 
 class Game(object):
-    def __init__(self, surface, session, draw=True, net=None):
+    def __init__(self, surface, session, draw=True, net=None, evolve=False):
         self.surface = surface
         self.session = session
         self.world = world.World(surface)
@@ -33,6 +36,17 @@ class Game(object):
         self.run = None
 
         self.loadNet = not net is None
+        self.evolve = evolve
+        self.epoch = 1
+        self.epochSize = 8
+        self.offspringRate=.25
+
+        if self.evolve:
+            self.currentNets = list(self.session.query(Network).join(Run).order_by(Run.score.desc()))[:self.epochSize]
+            self.currentRuns = []
+            self.testedNets = []
+
+            print(self.currentNets)
 
         if self.loadNet:
             self.net = session.query(Network).filter(Network.id==net).first()
@@ -162,8 +176,6 @@ class Game(object):
 
             print(self.status() + "         ", end='\r')
 
-        print()
-
     def game_over(self):
         end_animation_frames = 100
         end_animation_time = end_animation_frames
@@ -213,6 +225,66 @@ class Game(object):
 
         return 'net: %s, score: %.2lf, level: %d, n_asteroids: %d' % (self.net, self.world.score, self.level, self.world.n_asteroids)
 
+    def nextNetwork(self):
+
+        if self.loadNet:
+            self.run = Run(network=self.net)
+            self.session.add(self.run)
+
+        elif self.evolve:
+
+            # don't add null net
+            if not self.net is None:
+                self.testedNets.append(self.net)
+
+            # trigger new epoch
+            if len(self.currentRuns) == self.epochSize:
+                assert len(self.testedNets) == self.epochSize
+
+                scores = [r.score if r.score > 0 else 0 for r in self.currentRuns]
+                normScore = [1.*s/sum(scores) for s in scores]
+
+                numOffsping = int(self.offspringRate*self.epochSize)
+                numSurvive = self.epochSize - numOffsping
+
+                self.currentNets = []
+                self.currentRuns = []
+                self.testedNets = []
+
+                # add surviving nets
+                counts = np.random.multinomial(numSurvive, normScore)
+                for i,c in enumerate(counts):
+                    self.currentNets += [self.testedNets[i]]*c
+
+                # generate offspring
+                counts = np.random.multinomial(numOffsping, normScore)
+                for i,c in enumerate(counts):
+                    for j in range(c):
+                        temp  = shipnn.ShipNN(self.world, self.testedNets[i])
+                        m = Mutate(temp.net)
+                        n = Network(parent = self.testedNets[i])
+                        self.session.add(n)
+                        self.session.commit()
+
+                        m.mutant().save('.networks/%d.csv'%n.id)
+                        self.currentNets.append(n)
+
+                print (self.currentNets)
+
+            self.net = self.currentNets.pop()
+            self.run = Run(network=self.net)
+            self.session.add(self.run)
+            self.currentRuns.append(self.run)
+
+        else:
+            self.net =  Network()
+            self.session.add(self.net)
+
+            self.run = Run(network=self.net)
+            self.session.add(self.run)
+
+        self.session.commit()
+
     def play_game(self):
         # self.start_screen()
 
@@ -221,14 +293,17 @@ class Game(object):
             self.world.reset()
             self.world.particle.starfield()
 
-            if not self.loadNet:
-                self.net =  Network()
-                self.session.add(self.net)
+            # if not self.loadNet:
+            #     self.net =  Network()
+            #     self.session.add(self.net)
+            # self.net = self.nextNetwork()
+            #
+            # self.run = Run(network=self.net)
+            # self.session.add(self.run)
+            #
+            # self.session.commit()
 
-            self.run = Run(network=self.net)
-            self.session.add(self.run)
-
-            self.session.commit()
+            self.nextNetwork()
 
             while not self.world.quit:
                 self.level_start()
@@ -253,6 +328,8 @@ class Game(object):
                     self.level += 1
                     self.world.score += 500
 
+            print()
+
             self.run.levelsCompleted = self.level
             if self.world.shots > 0:
                 self.run.accuracy = 1.*self.world.bulletImpacts/self.world.shots
@@ -270,6 +347,7 @@ def main():
     parse = argparse.ArgumentParser()
     parse.add_argument("--noDraw",dest='noDraw',action='store_true',default=False)
     parse.add_argument("--net",default=None,type=int,dest='net')
+    parse.add_argument("--evolve",dest='evolve',action='store_true',default=False)
     args = parse.parse_args()
 
     ########################################
@@ -328,7 +406,7 @@ def main():
     pygame.mouse.set_visible(False)
     pygame.display.set_caption("Argh, it's the Asteroids!!")
 
-    game = Game(surface,session, not args.noDraw, args.net)
+    game = Game(surface,session, not args.noDraw, args.net, evolve=args.evolve)
 
     game.play_game()
 

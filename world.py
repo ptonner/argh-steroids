@@ -19,8 +19,9 @@ PENALTY_TIME = 100
 FIRE_PENALTY = 1
 
 class World(object):
-    def __init__(self, surface):
+    def __init__(self, surface, playerInput=True):
         self.surface = surface
+        self.playerInput = playerInput # should we track player input?
         self.width = surface.get_width()
         self.height = surface.get_height()
         self.sprites = []
@@ -104,41 +105,42 @@ class World(object):
                     self.player=None
                 if event.key == pygame.K_ESCAPE:
                     self.quit = event.type == pygame.KEYDOWN
-                elif event.key == pygame.K_LEFT:
-                    self.rotate_left = event.type == pygame.KEYDOWN
-                elif event.key == pygame.K_RIGHT:
-                    self.rotate_right = event.type == pygame.KEYDOWN
-                elif event.key == pygame.K_UP:
-                    self.thrust = event.type == pygame.KEYDOWN
-                elif event.key == pygame.K_SPACE:
-                    self.fire = event.type == pygame.KEYDOWN
-                elif event.key == pygame.K_s:
-                    self.spawn = event.type == pygame.KEYDOWN
-                elif event.key == pygame.K_n:
-                    self.next_level = event.type == pygame.KEYDOWN
-                elif event.key == pygame.K_m and event.type == pygame.KEYDOWN:
-                    self.music_playing = not self.music_playing
-                    self.play_music(self.music_playing)
-                elif event.key == pygame.K_p:
-                    if event.type == pygame.KEYDOWN:
-                        self.show_particles = not self.show_particles
-                elif event.key == pygame.K_i:
-                    self.info = event.type == pygame.KEYDOWN
-                elif event.key == pygame.K_RETURN:
-                    self.enter = event.type == pygame.KEYDOWN
-                elif event.key == pygame.K_f:
-                    if self.player:
-                        self.player.shield_on()
-            elif event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 3:
-                    self.thrust = event.type == pygame.MOUSEBUTTONDOWN
-                elif event.button == 1:
-                    self.fire = event.type == pygame.MOUSEBUTTONDOWN
+                if self.playerInput:
+                    if event.key == pygame.K_LEFT:
+                        self.rotate_left = event.type == pygame.KEYDOWN
+                    elif event.key == pygame.K_RIGHT:
+                        self.rotate_right = event.type == pygame.KEYDOWN
+                    elif event.key == pygame.K_UP:
+                        self.thrust = event.type == pygame.KEYDOWN
+                    elif event.key == pygame.K_SPACE:
+                        self.fire = event.type == pygame.KEYDOWN
+                    elif event.key == pygame.K_s:
+                        self.spawn = event.type == pygame.KEYDOWN
+                    elif event.key == pygame.K_n:
+                        self.next_level = event.type == pygame.KEYDOWN
+                    elif event.key == pygame.K_m and event.type == pygame.KEYDOWN:
+                        self.music_playing = not self.music_playing
+                        self.play_music(self.music_playing)
+                    elif event.key == pygame.K_p:
+                        if event.type == pygame.KEYDOWN:
+                            self.show_particles = not self.show_particles
+                    elif event.key == pygame.K_i:
+                        self.info = event.type == pygame.KEYDOWN
+                    elif event.key == pygame.K_RETURN:
+                        self.enter = event.type == pygame.KEYDOWN
+                    elif event.key == pygame.K_f:
+                        if self.player:
+                            self.player.shield_on()
+            # elif event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP:
+            #     if event.button == 3:
+            #         self.thrust = event.type == pygame.MOUSEBUTTONDOWN
+            #     elif event.button == 1:
+            #         self.fire = event.type == pygame.MOUSEBUTTONDOWN
 
         self.particle.show(self.show_particles)
 
-        x, y = pygame.mouse.get_rel()
-        self.rotate_by = x / 5.0
+        # x, y = pygame.mouse.get_rel()
+        # self.rotate_by = x / 5.0
 
         if self.rotate_left:
             self.rotate_by = -6
