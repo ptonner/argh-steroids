@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 
 import os
 import random
@@ -16,8 +17,9 @@ import ship
 
 from database import Network, Base, Run
 
+
 class Game(object):
-    def __init__(self, surface, session):
+    def __init__(self, surface, session, draw=True, net=None):
         self.surface = surface
         self.session = session
         self.world = world.World(surface)
@@ -25,6 +27,17 @@ class Game(object):
         self.height = self.world.height
         self.clock = pygame.time.Clock()
         self.level = 1
+        self.draw = draw
+
+        self.net = None
+        self.run = None
+
+        self.loadNet = not net is None
+
+        if self.loadNet:
+            self.net = session.query(Network).filter(Network.id==net).first()
+
+        # print self.net
 
     def draw_hud(self):
         text.draw_string(self.surface, "SCORE %.2lf" % self.world.score,
@@ -138,12 +151,18 @@ class Game(object):
                 break
 
             self.world.update()
-            self.surface.fill(util.BLACK)
-            self.draw_hud()
-            self.draw_info()
-            self.world.draw()
+
+            if self.draw:
+                self.surface.fill(util.BLACK)
+                self.draw_hud()
+                self.draw_info()
+                self.world.draw()
             # self.clock.tick(60)
             pygame.display.flip()
+
+            print(self.status() + "         ", end='\r')
+
+        print()
 
     def game_over(self):
         end_animation_frames = 100
@@ -176,31 +195,37 @@ class Game(object):
 
             self.world.update()
 
-            self.surface.fill(util.BLACK)
-            text.draw_string(self.surface, "PRESS ENTER TO PLAY AGAIN",
-                             util.WHITE,
-                             20,
-                             [self.width / 2, self.height / 2],
-                             centre = True,
-                             angle = 0)
-            self.draw_hud()
-            self.draw_info()
-            self.world.draw()
+            if self.draw:
+                self.surface.fill(util.BLACK)
+                text.draw_string(self.surface, "PRESS ENTER TO PLAY AGAIN",
+                                 util.WHITE,
+                                 20,
+                                 [self.width / 2, self.height / 2],
+                                 centre = True,
+                                 angle = 0)
+                self.draw_hud()
+                self.draw_info()
+                self.world.draw()
             self.clock.tick(60)
             pygame.display.flip()
 
+    def status(self):
+
+        return 'net: %s, score: %.2lf, level: %d, n_asteroids: %d' % (self.net, self.world.score, self.level, self.world.n_asteroids)
+
     def play_game(self):
-        self.start_screen()
+        # self.start_screen()
 
         while not self.world.quit:
             self.level = 1
             self.world.reset()
             self.world.particle.starfield()
 
-            self.net =  Network()
-            self.run = Run(network=self.net)
+            if not self.loadNet:
+                self.net =  Network()
+                self.session.add(self.net)
 
-            self.session.add(self.net)
+            self.run = Run(network=self.net)
             self.session.add(self.run)
 
             self.session.commit()
@@ -240,6 +265,12 @@ class Game(object):
             # self.epilogue()
 
 def main():
+
+    import argparse
+    parse = argparse.ArgumentParser()
+    parse.add_argument("--noDraw",dest='noDraw',action='store_true',default=False)
+    parse.add_argument("--net",default=None,type=int,dest='net')
+    args = parse.parse_args()
 
     ########################################
     # start database stuff
@@ -290,12 +321,14 @@ def main():
     # channels for explosions automatically
     mixer.set_reserved(4)
 
-    surface = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
-    #surface = pygame.display.set_mode([800, 600])
+
+    surface = pygame.display.set_mode()
+    # surface = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
+    # surface = pygame.display.set_mode([800, 600])
     pygame.mouse.set_visible(False)
     pygame.display.set_caption("Argh, it's the Asteroids!!")
 
-    game = Game(surface,session)
+    game = Game(surface,session, not args.noDraw, args.net)
 
     game.play_game()
 
