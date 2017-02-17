@@ -56,4 +56,4 @@ target/
 .*.swp
 
 .networks
-history.db
+history.db*
