@@ -248,8 +248,6 @@ class Game(object):
                 numSurvive = self.epochSize - numOffsping
 
                 self.currentNets = []
-                self.currentRuns = []
-                self.testedNets = []
 
                 # add surviving nets
                 counts = np.random.multinomial(numSurvive, normScore)
@@ -268,6 +266,9 @@ class Game(object):
 
                         m.mutant().save('.networks/%d.csv'%n.id)
                         self.currentNets.append(n)
+
+                self.currentRuns = []
+                self.testedNets = []
 
                 print (self.currentNets)
 
